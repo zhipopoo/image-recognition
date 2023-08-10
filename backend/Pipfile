@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+cython = "*"
+flask = "*"
+pillow = "*"
+numpy = "*"
+opencv-python = "*"
+torch = "*"
+pytest = "~=7.1.3"
+tqdm = "~=4.64.1"
+scipy = "*"
+matplotlib = "*"
+mock = "~=4.0.3"
+imageai = "*"
+pymongo = "*"
+flask-cors = "*"
+bson = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

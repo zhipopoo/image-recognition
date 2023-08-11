@@ -51,7 +51,7 @@ export default function Home() {
       // }
 
 
-      fetch('http://127.0.0.1:5000/recognition', {
+      fetch(process.env.API_URL + '/recognition', {
         method: 'POST', body: formData
       }).then(res => res.json()).then((result) => {
         setResult(result)
@@ -82,7 +82,7 @@ export default function Home() {
   }, [])
   const loadImages = async (query?: string) => {
     setIsImagesLoading(true)
-    return fetch(!query ? 'http://127.0.0.1:5000/images' : 'http://127.0.0.1:5000/images?search=' + query).then(res => res.json()).then((result) => {
+    return fetch(`${process.env.API_URL}/images${!query ? '' : '?search=' + query}`).then(res => res.json()).then((result) => {
       setImages(result.data)
 
     })

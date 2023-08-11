@@ -33,7 +33,7 @@ export default function Home() {
   const [isImagesLoading, setIsImagesLoading] = useState(false)
   const [result, setResult] = useState<{ [key: string]: number } | null>(null)
   const [uid, setUid] = useState<string>('')
-  const [images, setImages] = useState<Array<{ uid: string, img: string, tags: Array<string>, result: { [key: string]: number } }>>([])
+  const [images, setImages] = useState<Array<{ uid: string, img: string, tags: Array<{ tag: string, probability: number }>, }>>([])
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const submitHandling = async (fileData: File) => {
@@ -50,8 +50,7 @@ export default function Home() {
       //   output.src = reader.result;
       // }
 
-
-      fetch(process.env.API_URL + '/recognition', {
+      fetch(process.env.NEXT_PUBLIC_API_URL + '/recognition', {
         method: 'POST', body: formData
       }).then(res => res.json()).then((result) => {
         setResult(result)
@@ -82,7 +81,7 @@ export default function Home() {
   }, [])
   const loadImages = async (query?: string) => {
     setIsImagesLoading(true)
-    return fetch(`${process.env.API_URL}/images${!query ? '' : '?search=' + query}`).then(res => res.json()).then((result) => {
+    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/images${!query ? '' : '?search=' + query}`).then(res => res.json()).then((result) => {
       setImages(result.data)
 
     })
@@ -110,7 +109,10 @@ export default function Home() {
 
             <Image key={item.id} boxSize='200px' src={item.img} alt='' objectFit={'contain'} onClick={() => {
             setFile(item.img)
-            setResult(item.result)
+              setResult(item.tags.reduce((prev: { [key: string]: number }, next) => {
+                prev[next.tag] = next.probability
+                return prev
+              }, {}))
             onOpen()
             setMode('view')
             }} />

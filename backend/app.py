@@ -31,7 +31,7 @@ def getImages():
     print(args)
     images=''
     if args: 
-        images=db.images.find({"tags":{'$regex':'{}'.format(args),"$options" :'i'}})
+        images=db.images.find({"tags.tag":{'$regex':'{}'.format(args),"$options" :'i'}})
     else: 
         images=db.images.find()
 
@@ -47,7 +47,7 @@ def getRecognition():
         decoded = base64.b64decode(imgdata)
         img = np.array(Image.open(BytesIO(decoded)))
         prediction,tags=getPrediction(img)
-        db.images.insert_one({"uid":request.form.get('uid'),"img":request.form.get('img'),"tags":tags,"result":prediction})
+        db.images.insert_one({"uid":request.form.get('uid'),"img":request.form.get('img'),"tags":tags})
         return  prediction
     except Exception as error:
         abort(500,error) 

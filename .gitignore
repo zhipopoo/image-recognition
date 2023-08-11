@@ -6,7 +6,7 @@
 /node_modules
 /.pnp
 .pnp.js
-
+/backend/__pycache__
 # testing
 /coverage
 /frontend/node_modules

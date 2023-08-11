@@ -5,17 +5,22 @@ import base64
 import json
 from bson import json_util
 from PIL import Image
+import os
 from io import BytesIO
 import numpy as np
 from recognition import getPrediction
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app=Flask(__name__)
 CORS(app)
-client=MongoClient("mongodb://localhost:27017/")
+client=MongoClient(os.getenv("MONGO_ATLAS_CONNECTION"))
 db = client["image_recognition"]
 
-# @app.route('/')
-# def hello():
-#     return jsonify({"a":2})
+@app.route('/')
+def hello():
+    return 'Hello World'
 
 @app.route('/<id>')
 def getId(id):
@@ -26,7 +31,7 @@ def getImages():
     print(args)
     images=''
     if args: 
-        images=db.images.find({"tags":{'$regex':'{}'.format(args)}})
+        images=db.images.find({"tags":{'$regex':'{}'.format(args),"$options" :'i'}})
     else: 
         images=db.images.find()
 

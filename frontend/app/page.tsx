@@ -8,11 +8,12 @@ import {
   DrawerOverlay,
   Heading,
   Image,
-  SimpleGrid,
+  Table,
+  TableContainer, Tr, Td, Th, Thead, Tbody,
   Skeleton,
-  useDisclosure
+  useDisclosure, Stack
 } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 const toDataURL = (url: string) => fetch(url)
@@ -28,6 +29,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'upload' | 'view' | null>(null)
   const [query, setQuery] = useState<string>('')
+  // const query=useRef('')
   const [isImagesLoading, setIsImagesLoading] = useState(false)
   const [result, setResult] = useState<{ [key: string]: number } | null>(null)
   const [uid, setUid] = useState<string>('')
@@ -90,7 +92,7 @@ export default function Home() {
       setTimeout(() => {
 
         setIsImagesLoading(false)
-      }, 2000)
+      }, 1000)
     })
 
   }, [query])
@@ -98,20 +100,24 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
 
-      <Search onSubmit={submitHandling} isLoading={isLoading} value={query} onChange={(evt) => setQuery(evt.target.value)} />
+      <Search onSubmit={submitHandling} isLoading={isLoading} onChange={(evt) => setQuery(evt.target.value)} />
       <Heading className='self-start' as='h2' size={'lg'} mt={4}>Recent Photos</Heading>
-      <SimpleGrid columns={[3, null, 5]} mt={6} spacing={5}>
+      <Stack direction={['row']} mt={6} spacing={4} justifyContent={'flex-start'} width={'100%'} flexWrap={'wrap'}>
         {isImagesLoading ?
           Array.from({ length: 5 }).map((i, index) =>
-            <Skeleton height='200px' width='200px' key={index} />
-          ) : images.map(item => <Image sizes='200px' key={item.id} src={item.img} alt='' onClick={() => {
+            <Skeleton key={index} aspectRatio={1} maxWidth={'200px'} width={200} minWidth={'100px'} />
+          ) : images.map(item =>
+
+            <Image key={item.id} boxSize='200px' src={item.img} alt='' objectFit={'contain'} onClick={() => {
             setFile(item.img)
             setResult(item.result)
             onOpen()
             setMode('view')
-          }} />)
+            }} />
+
+          )
         }
-      </SimpleGrid>
+      </Stack>
       <Drawer placement={'right'} size={mode === 'upload' ? 'full' : 'lg'} onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
         <DrawerContent background={'black'}>
@@ -133,21 +139,24 @@ export default function Home() {
 
             }
             {result &&
-              <table className='border-separate border-spacing-2 border'>
-                <thead><th>Object</th>
-                  <th>Possibility</th>
-                </thead>
-                <tbody>
+              <TableContainer >
+
+                <Table variant='simple' color={'white'}>
+                  <Thead background={'Highlight'}><Th>Object</Th>
+                    <Th>Possibility</Th>
+                  </Thead>
+                  <Tbody background={'AppWorkspace'} color={'black'}>
 
                   {Object.keys(result).map(item =>
-                    <tr key={result[item]}>
-                      <td className='border border-slate-600 p-2'>{item}</td>
-                      <td className='border border-slate-600 p-2'>{result[item]}%</td>
-                    </tr>
+                    <Tr key={result[item]}>
+                      <Td className='border border-slate-600 p-2'>{item}</Td>
+                      <Td className='border border-slate-600 p-2'>{result[item]}%</Td>
+                    </Tr>
 
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </Tbody>
+                </Table>
+              </TableContainer>
 
             }
           </DrawerBody>

@@ -33,7 +33,7 @@ export default function Home() {
   const [isImagesLoading, setIsImagesLoading] = useState(false)
   const [result, setResult] = useState<{ [key: string]: number } | null>(null)
   const [uid, setUid] = useState<string>('')
-  const [images, setImages] = useState<Array<{ uid: string, img: string, tags: Array<{ tag: string, probability: number }>, }>>([])
+  const [images, setImages] = useState<Array<{ img: string, tags: Array<{ tag: string, probability: number }>, }>>([])
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const submitHandling = async (fileData: File) => {
@@ -43,17 +43,14 @@ export default function Home() {
       const base64 = await toDataURL(URL.createObjectURL(fileData))
       let formData = new FormData()
       formData.append('img', base64 as string)
-      formData.append('uid', uid)
-      // var reader = new FileReader();
-      // reader.onload = function(){
-      //   var output = document.getElementById('output_image');
-      //   output.src = reader.result;
-      // }
-
-      fetch(process.env.NEXT_PUBLIC_API_URL + '/recognition', {
-        method: 'POST', body: formData
+ 
+      fetch(`/recognition`, {
+        method: 'POST', body: formData,  mode: 'no-cors'
       }).then(res => res.json()).then((result) => {
-        setResult(result)
+        setResult(result.data.reduce((prev: { [key: string]: number }, next:{ tag: string, probability: number }) => {
+          prev[next.tag] = next.probability
+          return prev
+        }, {}))
         setIsLoading(false)
         onOpen()
         setMode('upload')
@@ -69,24 +66,26 @@ export default function Home() {
       })
     }
   }
-  useEffect(() => {
-    const userId = localStorage.getItem('uid')
-    if (userId) {
-      setUid(userId)
-    } else {
-      const newUserId = uuidv4()
-      setUid(newUserId)
-      localStorage.setItem('uid', newUserId)
-    }
-  }, [])
+
+  // useEffect(() => {
+  //   const userId = localStorage.getItem('uid')
+  //   if (userId) {
+  //     setUid(userId)
+  //   } else {
+  //     const newUserId = uuidv4()
+  //     setUid(newUserId)
+  //     localStorage.setItem('uid', newUserId)
+  //   }
+  // }, [])
+
   const loadImages = async (query?: string) => {
     setIsImagesLoading(true)
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/images${!query ? '' : '?search=' + query}`).then(res => res.json()).then((result) => {
+    return fetch(`/images${!query ? '' : '?search=' + query}`, { mode: 'no-cors'}).then(res => res.json()).then((result) => {
       setImages(result.data)
-
     })
   }
   useEffect(() => {
+    setImages([]);
     loadImages(query).finally(() => {
       setTimeout(() => {
 
@@ -99,15 +98,15 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
 
-      <Search onSubmit={submitHandling} isLoading={isLoading} onChange={(evt) => setQuery(evt.target.value)} />
+      <Search onSubmit={submitHandling} isLoading={isLoading} onSearch={(queryString) => setQuery(queryString)} />
       <Heading className='self-start' as='h2' size={'lg'} mt={4}>Recent Photos</Heading>
       <Stack direction={['row']} mt={6} spacing={4} justifyContent={'flex-start'} width={'100%'} flexWrap={'wrap'}>
         {isImagesLoading ?
-          Array.from({ length: 5 }).map((i, index) =>
-            <Skeleton key={index} aspectRatio={1} maxWidth={'200px'} width={200} minWidth={'100px'} />
+          Array.from({ length: images?.length??5 }).map((i, index) =>
+            <Skeleton key={index} aspectRatio={1} maxWidth={'200px'} width={200} minWidth={'100px'} isLoaded={isImagesLoading} />
           ) : images.map(item =>
 
-            <Image key={item.id} boxSize='200px' src={item.img} alt='' objectFit={'contain'} onClick={() => {
+            <Image key={item.img} boxSize='200px' src={item.img} alt='' objectFit={'contain'} onClick={() => {
             setFile(item.img)
               setResult(item.tags.reduce((prev: { [key: string]: number }, next) => {
                 prev[next.tag] = next.probability
@@ -116,7 +115,6 @@ export default function Home() {
             onOpen()
             setMode('view')
             }} />
-
           )
         }
       </Stack>
@@ -125,20 +123,17 @@ export default function Home() {
         <DrawerContent background={'black'}>
           <DrawerCloseButton />
           <DrawerHeader borderBottomWidth='1px' borderBottomColor={'gray.50'} >Result</DrawerHeader>
+
           <DrawerBody>
             {file && <Image src={typeof file === 'string' ? file : URL.createObjectURL(file)} width='400' height='200' alt="" />}
             {result &&
-              <div className='flex w-100 gap-2 my-5'>
-
+              <div className='flex w-100 gap-2 my-5 flex-wrap'>
                 {Object.keys(result).map(item =>
                   <span className='bg-[#eaeaea] text-black rounded-3xl py-2 px-4' key={result[item]}>
-
                     {item}
                   </span>
-
                 )}
               </div>
-
             }
             {result &&
               <TableContainer >
@@ -147,7 +142,7 @@ export default function Home() {
                   <Thead background={'Highlight'}><Th>Object</Th>
                     <Th>Possibility</Th>
                   </Thead>
-                  <Tbody background={'AppWorkspace'} color={'black'}>
+                  <Tbody background={'black'} color={'white'}>
 
                   {Object.keys(result).map(item =>
                     <Tr key={result[item]}>
